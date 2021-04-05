@@ -34,11 +34,6 @@ public abstract class SuperAI {
 
 
     public void train(DataSet ds) {
-        fnn.setLabel("label");
-        System.out.println("ds: " + ds);
-        System.out.println("nn: " + getNN());
-        System.out.println("learning...");
-        System.out.println("input neurons: " + fnn.getInputNeurons().size() + "\nds input: " + ds.getInputSize());
         fnn.learn(ds);
     }
 

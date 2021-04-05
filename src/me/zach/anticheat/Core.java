@@ -2,9 +2,11 @@ package me.zach.anticheat;
 
 import me.zach.anticheat.aicore.AI;
 import me.zach.anticheat.aicore.AIType;
+import me.zach.anticheat.aicore.ai.firstai.AIUtil;
 import org.neuroph.core.Layer;
 import org.neuroph.core.Neuron;
 import org.neuroph.core.data.DataSet;
+import org.neuroph.core.data.DataSetRow;
 import org.neuroph.nnet.comp.layer.InputLayer;
 
 public class Core {
@@ -19,10 +21,7 @@ public class Core {
         ds.add(new double[]{1,1,1,1},new double[]{1});
         ds.add(new double[]{1,1,1,1},new double[]{1});
         ds.add(new double[]{0,1,2,5},new double[]{0});
-
         Layer l = new Layer();
-        InputLayer il = new InputLayer(4);
-        aitest.getAI().getNN().setInputNeurons(il.getNeurons());
         for(int ignored :new int[]{1,2,3,4}){
             Neuron n = new Neuron();
             for(Object all: aitest.getAI().getNN().getInputNeurons()) {
@@ -30,13 +29,15 @@ public class Core {
             }
             l.addNeuron(n);
         }
-
         aitest.getAI().getNN().addLayer(l);
+        System.out.println("training...");
         aitest.getAI().train(ds);
-//        DataSet dseval = new DataSet(4);
-//        dseval.add(new DataSetRow(new double[]{1,1,1,1},new double[]{1}));
-//
-//        AIUtil.testNeuralNetwork(aitest.getAI().getNN(),dseval);
+        DataSet dseval = new DataSet(4);
+
+        dseval.add(new DataSetRow(new double[]{0,1,1,1},new double[]{1}));
+
+        System.out.println("testing...\n\n");
+        AIUtil.testNeuralNetwork(aitest.getAI().getNN(),dseval);
 
     }
 }
