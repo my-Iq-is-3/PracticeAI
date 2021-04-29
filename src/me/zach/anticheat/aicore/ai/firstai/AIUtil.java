@@ -1,5 +1,6 @@
 package me.zach.anticheat.aicore.ai.firstai;
 
+import me.zach.anticheat.aicore.SuperAI;
 import org.neuroph.core.Connection;
 import org.neuroph.core.Layer;
 import org.neuroph.core.NeuralNetwork;
@@ -14,6 +15,7 @@ import org.neuroph.eval.classification.ClassificationMetrics;
 import org.neuroph.eval.classification.ConfusionMatrix;
 import org.neuroph.nnet.learning.BackPropagation;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -26,20 +28,65 @@ public class AIUtil {
      * @param neuralNet neural network
      * @param testSet test data set
      */
-    public static void testNeuralNetwork(NeuralNetwork neuralNet, org.neuroph.core.data.DataSet testSet) {
+    public static void testNeuralNetwork(NeuralNetwork neuralNet, org.neuroph.core.data.DataSet testSet,boolean retest,double threshold,long iteration,double highAcc) throws InterruptedException {
+        try {
+            double correct = 0;
+            double hAcc = highAcc;
+            double inc = 0;
+            ArrayList<DataSetRow> failed = new ArrayList<>();
+            System.out.println("\nTesting...");
 
-        System.out.println("Showing inputs, desired output and neural network output for every row in test set.");
+            for (DataSetRow testSetRow : testSet.getRows()) {
+                neuralNet.setInput(testSetRow.getInput());
+                neuralNet.calculate();
+                double[] networkOutput = neuralNet.getOutput();
 
-        for (DataSetRow testSetRow : testSet.getRows()) {
-            neuralNet.setInput(testSetRow.getInput());
-            neuralNet.calculate();
-            double[] networkOutput = neuralNet.getOutput();
-
-            System.out.println("Input: " + Arrays.toString(testSetRow.getInput()));
-            System.out.println("Output: " + Arrays.toString(networkOutput));
-            System.out.println("Desired output" + Arrays.toString(testSetRow.getDesiredOutput()));
+                if (networkOutput[0] == testSetRow.getDesiredOutput()[0]) correct++;
+                else {
+                    inc++;
+                    failed.add(testSetRow);
+                }
+                if (testSet.getRows().size() < 6) {
+                    System.out.println("Input: " + Arrays.toString(testSetRow.getInput()));
+                    System.out.println("Output: " + Arrays.toString(networkOutput));
+                    System.out.println("Desired output" + Arrays.toString(testSetRow.getDesiredOutput()));
+                }
+            }
+            double total = inc + correct;
+            double acc = (correct / total) * 100;
+            System.out.println("testing finished, results: \nCorrect: " + correct + "\nIncorrect: " + inc + "\nPercent correct: " + acc + "%");
+            if(acc>hAcc) hAcc = acc;
+            if (!retest) return;
+            if (acc > threshold) {
+                System.out.println("Threshold reached! (" + threshold + "%)");
+                return;
+            }
+            if(iteration > 3000){
+                System.out.println("Max iteration reached, highest accuracy: " + hAcc + "%");
+                return;
+            }
+            System.out.println("Re-training... (" + iteration + ")");
+            for (DataSetRow tsr : failed) {
+                DataSet relearn = new DataSet(4, 1);
+                relearn.add(tsr);
+                neuralNet.learn(relearn);
+            }
+            Thread.sleep(10);
+            AIUtil.testNeuralNetwork(neuralNet, testSet, true, threshold, iteration + 1,hAcc);
+        }catch (StackOverflowError | AssertionError e){
+            System.out.println("\nstack error -_- at iteration " + iteration);
+            return;
         }
     }
+
+    public static void testNeuralNetwork(NeuralNetwork neuralNet, org.neuroph.core.data.DataSet testSet) throws InterruptedException {
+        testNeuralNetwork(neuralNet,testSet,false,0,0,0);
+    }
+
+    public static void testNeuralNetwork(NeuralNetwork neuralNet, org.neuroph.core.data.DataSet testSet,boolean retest,double threshold) throws InterruptedException {
+        testNeuralNetwork(neuralNet,testSet,retest,threshold,0,0);
+    }
+
 
     public static void evaluate(NeuralNetwork neuralNet, DataSet dataSet) {
 

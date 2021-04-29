@@ -6,6 +6,7 @@ import org.neuroph.core.Layer;
 import org.neuroph.core.NeuralNetwork;
 import org.neuroph.core.Neuron;
 import org.neuroph.core.data.DataSet;
+import org.neuroph.core.data.DataSetRow;
 import org.neuroph.nnet.Perceptron;
 import org.neuroph.nnet.learning.BackPropagation;
 
@@ -34,7 +35,11 @@ public abstract class SuperAI {
 
 
     public void train(DataSet ds) {
-        fnn.learn(ds);
+        for(DataSetRow dsr : ds.getRows()){
+            DataSet dsnew = new DataSet(ds.getInputSize(),ds.getOutputSize());
+            dsnew.add(dsr);
+            fnn.learn(dsnew);
+        }
     }
 
 
@@ -48,8 +53,8 @@ public abstract class SuperAI {
     }
 
 
-    public void test(DataSet ds) {
-        AIUtil.testNeuralNetwork(this.fnn,ds);
+    public void test(DataSet ds,boolean retest,double threshold) throws InterruptedException {
+        AIUtil.testNeuralNetwork(this.fnn,ds,retest,threshold);
     }
 
 
